@@ -1,0 +1,25 @@
+name:                compound-backend
+version:             0.1.0.0
+github:              "seu-usuario/compound-backend"
+license:             BSD3
+author:              "Seu Nome"
+maintainer:          "seu-email@example.com"
+extra-source-files:
+- README.md
+
+executables:
+  compound-backend-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - base >= 4.7 && < 5
+    - scotty
+    - aeson
+    - text
+    - wai
+    - wai-cors
+    - warp
