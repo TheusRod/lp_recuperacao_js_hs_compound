@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cálculo de Juros Compostos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+    }
+
+    button {
+      margin-top: 16px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button#calcBtn {
+      background-color: #007bff;
+      color: white;
+      width: 100%;
+    }
+
+    .result, .error {
+      margin-top: 16px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+
+    .result {
+      background-color: #e6ffe6;
+      border: 1px solid #8bc34a;
+    }
+
+    .error {
+      background-color: #ffe6e6;
+      border: 1px solid #f44336;
+      color: #c62828;
+    }
+
+    small {
+      color: #555;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Juros Compostos</h1>
+  <p>Preencha os campos abaixo e clique em <strong>Calcular</strong>.</p>
+
+  <label for="principal">Valor inicial (P) em R$</label>
+  <input id="principal" type="number" step="0.01" min="0" placeholder="Ex.: 1000.00" />
+
+  <label for="rate">Taxa anual (r) em decimal</label>
+  <input id="rate" type="number" step="0.0001" placeholder="Ex.: 0.12 para 12%" />
+  <small>Use formato decimal: 0.05 = 5% ao ano.</small>
+
+  <label for="timesPerYear">Vezes ao ano (n)</label>
+  <input id="timesPerYear" type="number" min="1" step="1" placeholder="Ex.: 12 para mensal" />
+
+  <label for="years">Tempo (t) em anos</label>
+  <input id="years" type="number" step="0.1" min="0" placeholder="Ex.: 2.5" />
+
+  <button id="calcBtn">Calcular</button>
+
+  <div id="result" class="result" style="display:none;"></div>
+  <div id="error" class="error" style="display:none;"></div>
+
+  <script>
+    // Troque pela URL real do backend em produção
+    const API_URL = "https://seu-backend.onrender.com/api/compound";
+
+    const formatBRL = (value) =>
+      new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+      }).format(value);
+
+    document.getElementById("calcBtn").addEventListener("click", async () => {
+      const principal = parseFloat(document.getElementById("principal").value);
+      const rate = parseFloat(document.getElementById("rate").value);
+      const timesPerYear = parseInt(document.getElementById("timesPerYear").value, 10);
+      const years = parseFloat(document.getElementById("years").value);
+
+      const resultDiv = document.getElementById("result");
+      const errorDiv = document.getElementById("error");
+      resultDiv.style.display = "none";
+      errorDiv.style.display = "none";
+
+      if (isNaN(principal) || principal <= 0 ||
+          isNaN(rate) ||
+          isNaN(timesPerYear) || timesPerYear < 1 ||
+          isNaN(years) || years <= 0) {
+        errorDiv.textContent =
+          "Preencha todos os campos com valores válidos (P > 0, n >= 1, t > 0).";
+        errorDiv.style.display = "block";
+        return;
+      }
+
+      const payload = { principal, rate, timesPerYear, years };
+
+      try {
+        const resp = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          const msg = data && data.details
+            ? data.details
+            : "Erro ao calcular. Tente novamente.";
+          errorDiv.textContent = msg;
+          errorDiv.style.display = "block";
+          return;
+        }
+
+        const { amount, interest } = data;
+        resultDiv.innerHTML = `
+          <strong>Resultado:</strong><br />
+          Montante (A): <strong>${formatBRL(amount)}</strong><br />
+          Juros totais: <strong>${formatBRL(interest)}</strong>
+        `;
+        resultDiv.style.display = "block";
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent =
+          "Erro de comunicação com o servidor. Verifique a URL da API.";
+        errorDiv.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>
